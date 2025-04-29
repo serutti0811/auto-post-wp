@@ -3,3 +3,4 @@ python-slugify
 requests
 tqdm
 copyleaks>=3.0
+python-frontmatter
