@@ -1,4 +1,4 @@
-openai>=1.17
+openai>=1.12
 python-slugify
 requests
 tqdm
