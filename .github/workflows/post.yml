@@ -11,25 +11,30 @@ jobs:
       WP_APP_PW:      ${{ secrets.WP_APP_PW }}
 
     steps:
-      # ① リポジトリをチェックアウト
+      # ① コード取得
       - uses: actions/checkout@v4
 
-      # ▼▼▼ ここからデバッグ追加 ▼▼▼
-      - name: echo WP credentials prefix         # ← 好きな名前で OK
+      # ② デバッグ：環境変数が渡っているか確認
+      - name: echo WP credentials prefix
         run: |
-          echo "USER = ${WP_USER}"
-          echo "PW_PREFIX = ${WP_APP_PW:0:8}"
-      # ▲▲▲ ここまでデバッグ追加 ▲▲▲
+          echo "USER=${WP_USER}"
+          echo "PW_PREFIX=${WP_APP_PW:0:8}"
 
-      # ② Python セットアップ
+      # ③ Python 3.11
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # ③ 残りは従来どおり
+      # ④ 依存インストール
       - run: pip install -r requirements.txt
+
+      # ⑤ 記事生成 → Draft
       - run: python generate.py
+
+      # ⑥ パラフレーズ → refined
       - run: python refine.py
+
+      # ⑦ refined があれば WordPress へ投稿
       - name: Post to WordPress if refined exists
         run: |
           FILE=$(ls refined_*.md 2>/dev/null || true)
