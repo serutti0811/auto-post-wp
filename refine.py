@@ -1,3 +1,8 @@
+import pathlib, os
+print("📂 workspace:", os.getcwd())
+print("📄 draft files:", list(pathlib.Path(".").glob("draft_*.md")))
+
+
 import pathlib
 import random
 
