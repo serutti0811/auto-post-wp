@@ -1,3 +1,4 @@
+import os
 import pathlib, random
 from openai import OpenAI
 
