@@ -1,0 +1,53 @@
+name: Auto-Post WP
+
+on:
+  # 毎朝 08:00 JST（＝UTC 23:00）に自動実行
+  schedule:
+    - cron:  '0 23 * * *'
+  # 手動テスト用ボタンを表示
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+
+    # ---------- ここに環境変数をマッピング ----------
+    env:
+      # OpenAI のキー（GitHub Secrets に OPENAI_API_KEY として登録）
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      # WordPress 接続情報
+      WP_USER:  ai_writer                    # ← 投稿専用ユーザー名を直書き
+      WP_APP_PW: ${{ secrets.WP_APP_PW }}    # ← 24 桁のアプリパスは Secret で安全に
+
+      # Copyleaks / GPTZero など使う場合（任意）
+      COPYLEAKS_ID:  ${{ secrets.COPYLEAKS_ID }}
+      COPYLEAKS_KEY: ${{ secrets.COPYLEAKS_KEY }}
+    # -----------------------------------------------
+
+    steps:
+      # ① リポジトリのコードをチェックアウト
+      - uses: actions/checkout@v4
+
+      # ② Python 3.11 をセットアップ
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ③ 依存ライブラリをインストール
+      - run: pip install -r requirements.txt
+
+      # ④ 記事生成 → “draft_YYYY-MM-DD.md” を作成
+      - run: python generate.py
+
+      # ⑤ 人間味パラフレーズ & Copyleaks 判定 → “refined_*.md” を作成
+      - run: python refine.py
+
+      # ⑥ WordPress へ投稿（refined ファイルが無いときはスキップ）
+      - run: |
+          FILE=$(ls refined_*.md 2>/dev/null || true)
+          if [ -n "$FILE" ]; then
+            python post_wp.py "$FILE"
+          else
+            echo "No refined file to post"
+          fi
